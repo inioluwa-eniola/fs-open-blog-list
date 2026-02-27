@@ -13,7 +13,6 @@ const App = () => {
   const [password, setPassword] = useState('')
   const [newBlog, setNewBlog] = useState(null)
   const [message, setMessage] = useState({ status: null, type: 'success', style: {} })
-  const [loginVisible, setLoginVisible] = useState(false)
 
   const successMessageStyle = {
     color: 'green',
@@ -96,6 +95,33 @@ const App = () => {
     setTimeout(() => setMessage({...message, status: null}), 5000)
     
   }
+
+  const loginForm = () => (
+    <div>
+      <h1>login to application</h1>
+      <form onSubmit={handleLogin}>
+        <div>
+          <label>
+            username
+            <input 
+              type='text'
+              onChange={({ target }) => setUsername(target.value)}
+            />
+          </label>
+        </div>
+        <div>
+          <label>
+            password
+            <input 
+              type='password'
+              onChange={({ target }) => setPassword(target.value)}
+            />
+          </label>
+        </div>
+        <button>login</button>
+      </form>
+    </div>
+  )
 
   const createNew = () => (
   <div>
