@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react'
 import Blog from './components/Blog'
 import Logout from './components/Logout'
 import Message from './components/Message'
+import Toggle from './components/Toggle'
+import LoginForm from './components/LoginForm'
+import BlogForm from './components/BlogForm'
 import blogService from './services/blogs'
 import loginService from './services/login'
 
@@ -9,9 +12,6 @@ import loginService from './services/login'
 const App = () => {
   const [blogs, setBlogs] = useState([])
   const [user, setUser] = useState(null)
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [newBlog, setNewBlog] = useState(null)
   const [message, setMessage] = useState({ status: null, type: 'success', style: {} })
 
   const successMessageStyle = {
@@ -49,21 +49,13 @@ const App = () => {
     }
   }, [])
 
-  const handleLogin = async (event) => {
-    event.preventDefault()
-
-    console.log('logging in with', username, password)
-  
+  const createLogin = async (loginInfo) => {
     try {
-      const user = await loginService.login({ username, password })
-  
+      const user = await loginService.login(loginInfo)
       window.localStorage.setItem('loggedInUser', JSON.stringify(user))
-      
       blogService.setUserToken(user.token)
       
       setUser(user)
-      setUsername('')
-      setPassword('')
       setMessage(prev => ({
         ...prev,
         status: `${user.name} is logged in`,
@@ -78,14 +70,12 @@ const App = () => {
       }))
       setTimeout(() => setMessage({ ...message, status: null }), 5000)
     }
-    
   }
 
-  const handleBlogCreation = async (event) => {
-    event.preventDefault()
-    console.log(newBlog)
+  const createBlog = async (newBlog) => {
     const response = await blogService.create(newBlog)
     console.log('response of creating new blog', response)
+    
     setBlogs(blogs.concat(response))
     setMessage(prev => ({
       ...prev,
@@ -95,69 +85,6 @@ const App = () => {
     setTimeout(() => setMessage({...message, status: null}), 5000)
     
   }
-
-  const loginForm = () => (
-    <div>
-      <h1>login to application</h1>
-      <form onSubmit={handleLogin}>
-        <div>
-          <label>
-            username
-            <input 
-              type='text'
-              onChange={({ target }) => setUsername(target.value)}
-            />
-          </label>
-        </div>
-        <div>
-          <label>
-            password
-            <input 
-              type='password'
-              onChange={({ target }) => setPassword(target.value)}
-            />
-          </label>
-        </div>
-        <button>login</button>
-      </form>
-    </div>
-  )
-
-  const createNew = () => (
-  <div>
-    <h1>create new</h1>
-    <form onSubmit={handleBlogCreation}>
-      <div>
-        <label>
-          title:
-          <input 
-            type='text'
-            onChange={({ target }) => setNewBlog({...newBlog, title: target.value})}
-          />
-        </label>
-      </div>
-      <div>
-        <label>
-          author:
-          <input 
-            type='text'
-            onChange={({ target }) => {setNewBlog({...newBlog, author: target.value})}}
-          />
-        </label>
-      </div>
-      <div>
-        <label>
-          url:
-          <input 
-            type='text'
-            onChange={({ target }) => setNewBlog({...newBlog, url: target.value})}
-          />
-        </label>
-      </div>
-      <button>create</button>
-    </form>
-  </div>
-  )
 
   const blogsDisplayed = () => (
     <div>
@@ -171,19 +98,27 @@ const App = () => {
           setMessage={setMessage}
         />
       </div>
-      {user && createNew()}
-      <ol>
-        {blogs.map(blog =>
-          <Blog key={blog.id} blog={blog} />
-        )}
-      </ol>
+      {
+        user && 
+        <Toggle buttonLabel='create new blog'>
+          <BlogForm createBlog={createBlog}/>
+        </Toggle>
+      }
+      {blogs.sort((itemA, itemB) => itemA.likes - itemB.likes).map(blog =>
+        <Blog key={blog.id} blog={blog} user={user} id={blog.id}/>
+      )}
     </div>
   )
 
   return (
     <div>
       <Message message={message}/>
-      {!user && loginForm()}
+      {
+        !user && 
+        <Toggle buttonLabel='login'>
+          <LoginForm createLogin={createLogin}/> 
+        </Toggle>
+      }
       {user && blogsDisplayed()}
     </div>
   )
